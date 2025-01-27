@@ -97,6 +97,14 @@ public class CopyDependenciesMojo extends AbstractFromDependenciesMojo {
     @Parameter(property = "mdep.addParentPoms", defaultValue = "false")
     protected boolean addParentPoms;
 
+    /**
+     * Also copy the signature files of each artifact.
+     *
+     * @since 3.2.0
+     */
+    @Parameter(property = "mdep.copySignatures", defaultValue = "false")
+    protected boolean copySignatures;
+
     @Inject
     // CHECKSTYLE_OFF: ParameterNumber
     public CopyDependenciesMojo(
@@ -266,6 +274,15 @@ public class CopyDependenciesMojo extends AbstractFromDependenciesMojo {
         }
         try {
             copyUtil.copyArtifactFile(artifact, destFile);
+
+            // Copy the signature file if the parameter is enabled
+            if (copySignatures) {
+                File signatureFile = new File(artifact.getFile().getAbsolutePath() + ".asc");
+                if (signatureFile.exists()) {
+                    File signatureDestFile = new File(destDir, destFileName + ".asc");
+                    copyUtil.copyFile(signatureFile, signatureDestFile);
+                }
+            }
         } catch (IOException e) {
             throw new MojoExecutionException(
                     "Failed to copy artifact '" + artifact + "' (" + artifact.getFile() + ") to " + destFile, e);

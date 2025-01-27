@@ -102,6 +102,38 @@ public class TestCopyDependenciesMojo extends AbstractDependencyMojoTestCase {
     }
 
     /**
+     * Tests the copying of signature files associated with artifacts.
+     *
+     * @throws Exception if an error occurs during the test
+     */
+    public void testCopySignatureFiles() throws Exception {
+        // Enable the copySignatures parameter
+        mojo.copySignatures = true;
+
+        if (!mojo.outputDirectory.exists()) {
+            assertTrue("Failed to create output directory", mojo.outputDirectory.mkdirs());
+        }
+
+        Artifact artifact = stubFactory.createArtifact(
+                "org.apache.maven.plugins", "maven-dependency-plugin", "1.0", Artifact.SCOPE_COMPILE);
+        File artifactFile = new File(mojo.outputDirectory, "maven-dependency-plugin-1.0.jar");
+        artifact.setFile(artifactFile);
+        assertTrue("Failed to create artifact file", artifactFile.createNewFile());
+
+        File signatureFile = new File(mojo.outputDirectory, "maven-dependency-plugin-1.0.jar.asc");
+        assertTrue("Failed to create signature file", signatureFile.createNewFile());
+
+        Set<Artifact> artifacts = new HashSet<>();
+        artifacts.add(artifact);
+        mojo.getProject().setArtifacts(artifacts);
+
+        mojo.execute();
+
+        File copiedSignatureFile = new File(mojo.outputDirectory, "maven-dependency-plugin-1.0.jar.asc");
+        assertTrue("Signature file was not copied", copiedSignatureFile.exists());
+    }
+
+    /**
      * Tests the proper discovery and configuration of the mojo.
      *
      * @throws Exception in case of an error
