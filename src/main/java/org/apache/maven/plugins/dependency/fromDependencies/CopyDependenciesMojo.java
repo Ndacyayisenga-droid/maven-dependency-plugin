@@ -278,9 +278,25 @@ public class CopyDependenciesMojo extends AbstractFromDependenciesMojo {
             // Copy the signature file if the parameter is enabled
             if (copySignatures) {
                 File signatureFile = new File(artifact.getFile().getAbsolutePath() + ".asc");
-                if (signatureFile.exists()) {
+                if (!signatureFile.exists()) {
+                    try {
+                        org.eclipse.aether.artifact.Artifact aArtifact = RepositoryUtils.toArtifact(artifact);
+                        org.eclipse.aether.artifact.Artifact aSignatureArtifact =
+                                new SubArtifact(aArtifact, null, "jar.asc");
+                        org.eclipse.aether.artifact.Artifact resolvedSignature = getResolverUtil()
+                                .resolveArtifact(
+                                        aSignatureArtifact, getProject().getRemoteProjectRepositories());
+                        signatureFile = resolvedSignature.getFile();
+                    } catch (ArtifactResolutionException e) {
+                        getLog().warn("Failed to resolve signature file for artifact: " + artifact, e);
+                    }
+                }
+
+                if (signatureFile != null && signatureFile.exists()) {
                     File signatureDestFile = new File(destDir, destFileName + ".asc");
                     copyUtil.copyFile(signatureFile, signatureDestFile);
+                } else {
+                    getLog().warn("Signature file for artifact " + artifact + " not found and could not be resolved.");
                 }
             }
         } catch (IOException e) {
@@ -288,7 +304,6 @@ public class CopyDependenciesMojo extends AbstractFromDependenciesMojo {
                     "Failed to copy artifact '" + artifact + "' (" + artifact.getFile() + ") to " + destFile, e);
         }
     }
-
     /**
      * Copy the pom files associated with the artifacts.
      *
