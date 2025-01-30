@@ -74,7 +74,7 @@ public class CopyUtil {
     }
 
     /**
-     * Copies a file to a destination.
+     * Copies a file to a destination and refreshes the build context for the new file.
      *
      * @param source the source file to copy
      * @param destination the destination file
