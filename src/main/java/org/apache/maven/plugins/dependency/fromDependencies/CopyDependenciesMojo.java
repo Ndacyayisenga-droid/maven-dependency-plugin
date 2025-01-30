@@ -98,7 +98,7 @@ public class CopyDependenciesMojo extends AbstractFromDependenciesMojo {
     protected boolean addParentPoms;
 
     /**
-     * Also copy the signature files of each artifact.
+     * Also copy the signature files (.asc) of each artifact.
      *
      * @since 3.2.0
      */
