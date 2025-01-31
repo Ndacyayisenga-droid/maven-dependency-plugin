@@ -248,6 +248,8 @@ public class CopyDependenciesMojo extends AbstractFromDependenciesMojo {
      * @see CopyUtil#copyArtifactFile(Artifact, File)
      * @see DependencyUtil#getFormattedOutputDirectory(boolean, boolean, boolean, boolean, boolean, boolean, File, Artifact)
      */
+    private static final String SIGNATURE_EXTENSION = ".asc";
+
     protected void copyArtifact(
             Artifact artifact,
             boolean removeVersion,
@@ -277,12 +279,12 @@ public class CopyDependenciesMojo extends AbstractFromDependenciesMojo {
 
             // Copy the signature file if the parameter is enabled
             if (copySignatures) {
-                File signatureFile = new File(artifact.getFile().getAbsolutePath() + ".asc");
+                File signatureFile = new File(artifact.getFile().getAbsolutePath() + SIGNATURE_EXTENSION);
                 if (!signatureFile.exists()) {
                     try {
                         org.eclipse.aether.artifact.Artifact aArtifact = RepositoryUtils.toArtifact(artifact);
                         org.eclipse.aether.artifact.Artifact aSignatureArtifact =
-                                new SubArtifact(aArtifact, null, "jar.asc");
+                                new SubArtifact(aArtifact, null, "jar" + SIGNATURE_EXTENSION);
                         org.eclipse.aether.artifact.Artifact resolvedSignature = getResolverUtil()
                                 .resolveArtifact(
                                         aSignatureArtifact, getProject().getRemoteProjectRepositories());
@@ -293,7 +295,7 @@ public class CopyDependenciesMojo extends AbstractFromDependenciesMojo {
                 }
 
                 if (signatureFile != null && signatureFile.exists()) {
-                    File signatureDestFile = new File(destDir, destFileName + ".asc");
+                    File signatureDestFile = new File(destDir, destFileName + SIGNATURE_EXTENSION);
                     copyUtil.copyFile(signatureFile, signatureDestFile);
                 } else {
                     getLog().warn("Signature file for artifact " + artifact + " not found and could not be resolved.");
@@ -304,6 +306,7 @@ public class CopyDependenciesMojo extends AbstractFromDependenciesMojo {
                     "Failed to copy artifact '" + artifact + "' (" + artifact.getFile() + ") to " + destFile, e);
         }
     }
+
     /**
      * Copy the pom files associated with the artifacts.
      *
