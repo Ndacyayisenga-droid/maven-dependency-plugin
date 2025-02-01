@@ -277,33 +277,50 @@ public class CopyDependenciesMojo extends AbstractFromDependenciesMojo {
         try {
             copyUtil.copyArtifactFile(artifact, destFile);
 
-            // Copy the signature file if the parameter is enabled
-            if (copySignatures) {
-                File signatureFile = new File(artifact.getFile().getAbsolutePath() + SIGNATURE_EXTENSION);
-                if (!signatureFile.exists()) {
-                    try {
-                        org.eclipse.aether.artifact.Artifact aArtifact = RepositoryUtils.toArtifact(artifact);
-                        org.eclipse.aether.artifact.Artifact aSignatureArtifact =
-                                new SubArtifact(aArtifact, null, "jar" + SIGNATURE_EXTENSION);
-                        org.eclipse.aether.artifact.Artifact resolvedSignature = getResolverUtil()
-                                .resolveArtifact(
-                                        aSignatureArtifact, getProject().getRemoteProjectRepositories());
-                        signatureFile = resolvedSignature.getFile();
-                    } catch (ArtifactResolutionException e) {
-                        getLog().warn("Failed to resolve signature file for artifact: " + artifact, e);
-                    }
-                }
+            copySignatureFile(artifact, destDir, destFileName);
 
-                if (signatureFile != null && signatureFile.exists()) {
-                    File signatureDestFile = new File(destDir, destFileName + SIGNATURE_EXTENSION);
-                    copyUtil.copyFile(signatureFile, signatureDestFile);
-                } else {
-                    getLog().warn("Signature file for artifact " + artifact + " not found and could not be resolved.");
-                }
-            }
         } catch (IOException e) {
             throw new MojoExecutionException(
                     "Failed to copy artifact '" + artifact + "' (" + artifact.getFile() + ") to " + destFile, e);
+        }
+    }
+
+    /**
+     * Copies the signature file of the artifact to the destination directory, if it exists or can be resolved.
+     * If the signature file does not exist and cannot be resolved, a warning is logged.
+     * @param artifact the artifact whose signature file should be copied
+     * @param destDir the destination directory
+     * @param destFileName the destination file name without the extension
+     */
+    private void copySignatureFile(Artifact artifact, File destDir, String destFileName) {
+        if (!copySignatures) {
+            return;
+        }
+
+        File signatureFile = new File(artifact.getFile().getAbsolutePath() + SIGNATURE_EXTENSION);
+
+        if (!signatureFile.exists()) {
+            try {
+                org.eclipse.aether.artifact.Artifact aArtifact = RepositoryUtils.toArtifact(artifact);
+                org.eclipse.aether.artifact.Artifact aSignatureArtifact =
+                        new SubArtifact(aArtifact, null, "jar" + SIGNATURE_EXTENSION);
+                org.eclipse.aether.artifact.Artifact resolvedSignature = getResolverUtil()
+                        .resolveArtifact(aSignatureArtifact, getProject().getRemoteProjectRepositories());
+                signatureFile = resolvedSignature.getFile();
+            } catch (ArtifactResolutionException e) {
+                getLog().warn("Failed to resolve signature file for artifact: " + artifact, e);
+            }
+        }
+
+        if (signatureFile != null && signatureFile.exists()) {
+            File signatureDestFile = new File(destDir, destFileName + SIGNATURE_EXTENSION);
+            try {
+                copyUtil.copyFile(signatureFile, signatureDestFile);
+            } catch (IOException e) {
+                getLog().warn("Failed to copy signature file: " + signatureFile, e);
+            }
+        } else {
+            getLog().warn("Signature file for artifact " + artifact + " not found and could not be resolved.");
         }
     }
 
