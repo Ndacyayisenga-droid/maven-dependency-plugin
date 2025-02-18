@@ -277,7 +277,10 @@ public class CopyDependenciesMojo extends AbstractFromDependenciesMojo {
         try {
             copyUtil.copyArtifactFile(artifact, destFile);
 
-            copySignatureFile(artifact, destDir, destFileName);
+            // Copy the signature file if the copySignatures flag is true
+            if (copySignatures) {
+                copySignatureFile(artifact, destDir, destFileName);
+            }
 
         } catch (IOException e) {
             throw new MojoExecutionException(
@@ -293,10 +296,6 @@ public class CopyDependenciesMojo extends AbstractFromDependenciesMojo {
      * @param destFileName the destination file name without the extension
      */
     private void copySignatureFile(Artifact artifact, File destDir, String destFileName) {
-        if (!copySignatures) {
-            return;
-        }
-
         File signatureFile = new File(artifact.getFile().getAbsolutePath() + SIGNATURE_EXTENSION);
 
         if (!signatureFile.exists()) {
